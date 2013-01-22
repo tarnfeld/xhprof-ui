@@ -1,0 +1,20 @@
+{
+  "name": "tarnfeld/xhprof-ui",
+  "description": "Friendly interface and implementation of the Facebook XHProf profiling library.",
+  "authors": [
+    {
+        "name": "Tom Arnfeld",
+        "email": "tarnfeld@me.com"
+    }
+  ],
+  "require": {
+    "vlucas/bulletphp": "dev-master",
+    "twitter/bootstrap": "dev-3.0.0-wip"
+  },
+  "autoload": {
+    "psr-0": {
+      "XHProfUI": "classes/"
+    },
+    "files": ["xhprof/lib.php", "xhprof/runs.php"]
+  }
+}
