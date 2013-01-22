@@ -15,6 +15,6 @@
     "psr-0": {
       "XHProfUI": "classes/"
     },
-    "files": ["xhprof/lib.php", "xhprof/runs.php"]
+    "files": []
   }
 }
