@@ -9,6 +9,11 @@ class Session
 {
 
   /**
+   * Table name
+   */
+  public static $table = "sessions";
+
+  /**
    * Session properties
    */
   public $id;
@@ -33,20 +38,18 @@ class Session
   protected $_db;
 
   /**
-   * Config
-   */
-  protected $_config;
-
-  /**
    * Save the current session
    *
-   * @author Tom Arnfeld <tarnfeld@me.com>
+   * @author Tom Arnfeld <tom@duedil.com>
+   * @param \XBProfUI\Db $db
    * @param array $config
    * @return Session
    */
-  public static function save($config)
+  public static function save(\XBProfUI\Db $db)
   {
-    $session = new static($config);
+    $config = \XHProfUI\Config::cache();
+
+    $session = new static($db);
     $data = xhprof_disable();
 
     // Set the various custom properties
@@ -66,11 +69,10 @@ class Session
     $session->serverId = $config["app"]["server_id"];
 
     // Set the serialized objects
-    $serializer = $config["profiler"]["serializer"];
-    $session->profileData = gzcompress(\XHProfUI\Serializer::serialize($data, $serializer));
-    $session->cookieData = gzcompress(\XHProfUI\Serializer::serialize($_COOKIE, $serializer));
-    $session->getData = gzcompress(\XHProfUI\Serializer::serialize($_GET, $serializer));
-    $session->postData = gzcompress(\XHProfUI\Serializer::serialize($_POST, $serializer));
+    $session->profileData = $data;
+    $session->cookieData = $_COOKIE;
+    $session->getData = $_GET;
+    $session->postData = $_POST;
 
     if (!$session->_save()) {
       return null;
@@ -83,12 +85,38 @@ class Session
    * Return an array of sessions based on the given query
    *
    * @author Tom Arnfeld <tom@duedil.com>
-   * @param [type] $query [description]
-   * @return [type] [description]
+   * @param array $search_query
+   * @param integer $limit
+   * @return array[Session]
    */
-  public static function getSessions($query)
+  public static function getSessions(\XHProfUI\Db $db, array $search_query, $limit = 25)
   {
+    // Work out the where clause
+    $where = null;
+    foreach ($search_query as $field => $value) {
+      if (!$where) $where = "WHERE";
+      else $where .= " AND";
 
+      $where .= " `" . $field . "` = '" . $db->escape($value).  "'";
+    }
+
+    // Build the query
+    $query = "SELECT *
+              FROM `" . static::$table . "`
+              {$where}
+              LIMIT {$limit}";
+
+    $r = $db->query($query);
+    $results = array();
+
+    while ($row = $db->getNextAssoc($r)) {
+      $session = new static($db);
+      $session->_setFromArray($row);
+
+      $results[$session->id] = $session;
+    }
+
+    return $results;
   }
 
   /**
@@ -97,12 +125,9 @@ class Session
    * @author Tom Arnfeld <tom@duedil.com>
    * @param array $config
    */
-  protected function __construct($config)
+  protected function __construct(\XHProfUI\Db $db)
   {
-    $this->_config = $config;
-
-    $this->_db = new \XHProfUI\Db\MySQL($config);
-    $this->_db->connect();
+    $this->_db = $db;
   }
 
   /**
@@ -119,7 +144,10 @@ class Session
   // Actuall save
   protected function _save()
   {
-    $query = "INSERT INTO `sessions`
+    $config = \XHProfUI\Config::cache();
+    $serializer = $config["profiler"]["serializer"];
+
+    $query = "INSERT INTO `" . static::$table . "`
               (`id`, `url`, `timestamp`, `server_name`, `server_id`, `remote_address`, `is_ajax`, `peak_memory`, `wall_time`, `cpu`, `profile_data`, `cookie_data`, `get_data`, `post_data`)
               VALUES(
                 '" . $this->_db->escape($this->id) . "',
@@ -132,10 +160,10 @@ class Session
                 '" . $this->_db->escape($this->peakMemory) . "',
                 '" . $this->_db->escape($this->wallTime) . "',
                 '" . $this->_db->escape($this->cpu) . "',
-                '" . $this->_db->escape($this->profileData) . "',
-                '" . $this->_db->escape($this->cookieData) . "',
-                '" . $this->_db->escape($this->getData) . "',
-                '" . $this->_db->escape($this->postData) . "'
+                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->profileData, $serializer)) . "',
+                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->cookieData, $serializer)) . "',
+                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->getData, $serializer)) . "',
+                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->postData, $serializer)) . "'
               );";
 
     $this->_db->query($query);
@@ -144,5 +172,54 @@ class Session
     }
 
     return false;
+  }
+
+  protected function _setFromArray($array)
+  {
+    $config = \XHProfUI\Config::cache();
+
+    $fields = array(
+      "id" => array("id", "string"),
+      "url" => array("url", "string"),
+      "timestamp" => array("timestamp", "int"),
+      "server_name" => array("serverName", "string"),
+      "server_id" => array("serverId", "string"),
+      "remote_address" => array("remoteAddress", "string"),
+      "profile_data" => array("profileData", "serialized"),
+      "cookie_data" => array("cookieData", "serialized"),
+      "get_data" => array("getData", "serialized"),
+      "post_data" => array("postData", "serialized"),
+      "is_ajax" => array("isAjax", "bool"),
+      "peak_memory" => array("peakMemory", "int"),
+      "wall_time" => array("wallTime", "int"),
+      "cpu" => array("cpu", "int"),
+      "user" => array("user", "string")
+    );
+
+    foreach ($array as $k => $v)
+    {
+      if (isset($fields[$k])) {
+
+        // Type mapping
+        if (isset($fields[$k][1])) {
+          switch ($fields[$k][1]) {
+
+            case "int":
+              $v = (int) $v;
+              break;
+
+            case "bool":
+              $v = (bool)(int) $v;
+              break;
+
+            case "serialized":
+              $v = \XHProfUI\Serializer::unserialize($v, $config["profiler"]["serializer"]);
+              break;
+          }
+        }
+
+        $this->{$fields[$k][0]} = $v;
+      }
+    }
   }
 }

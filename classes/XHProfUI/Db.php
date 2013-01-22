@@ -12,9 +12,10 @@ abstract class Db
     protected $config;
     public $linkID;
 
-    public function __construct($config)
+    public function __construct()
     {
-        $this->config = $config;
+        $config = \XHProfUI\Config::cache();
+        $this->config = $config["db"];
     }
 
     abstract public function connect();

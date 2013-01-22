@@ -13,7 +13,7 @@ class MySQL extends \XHProfUI\Db
 
   public function connect()
   {
-    $this->link_id = mysql_connect($this->config["db"]["hostname"], $this->config["db"]["username"], $this->config["db"]["password"]);
+    $this->link_id = mysql_connect($this->config["hostname"], $this->config["username"], $this->config["password"]);
     if ($this->link_id === FALSE)
     {
       xhprof_error("Could not connect to db");
@@ -22,7 +22,7 @@ class MySQL extends \XHProfUI\Db
     }
 
     $this->query("SET NAMES utf8");
-    mysql_select_db($this->config["db"]["database"], $this->link_id);
+    mysql_select_db($this->config["database"], $this->link_id);
   }
 
   public function query($sql)

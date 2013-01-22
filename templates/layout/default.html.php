@@ -2,12 +2,15 @@
 <html>
   <head>
     <title>XHProf UI</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
-    <!-- StyleSheets -->
-    <link rel="stylesheet" href="/vendor/twitter/bootstrap/">
-    <!-- JS -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="/assets/css/bootstrap.css" />
+    <script type="text/javascript" src="/assets/js/bootstrap.js"></script>
   </head>
   <body>
-    <?= $yield ?>
+    <div id="container">
+      <?= $yield ?>
+    </div>
   </body>
 </html>

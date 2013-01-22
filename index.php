@@ -21,12 +21,43 @@ $app = new \Bullet\App(array(
 
 // Setup a few global things
 $config = XHProfUI\Config::load(__DIR__ . "/config.php");
-$db = new XHProfUI\Db\MySQL($config["db"]);
+$db = new XHProfUI\Db\MySQL(); $db->connect();
 
 // Session list
-$app->path("/", function($request) use ($app) {
-  var_dump(class_exists("\XHProfUI\DB\MySQL"));die();
-  return $app->template("sessions", array());
+$app->path("/", function($request) use ($app, $db) {
+
+  // Check for any search params
+  $query = array();
+
+  if (isset($_GET["search"]["id"]) && ($q = trim($_GET["search"]["id"]))) {
+    $query["id"] = $q;
+  }
+
+  if (isset($_GET["search"]["server_name"]) && ($q = trim($_GET["search"]["server_name"]))) {
+    $query["server_name"] = $q;
+  }
+
+  if (isset($_GET["search"]["server_id"]) && ($q = trim($_GET["search"]["server_id"]))) {
+    $query["server_id"] = $q;
+  }
+
+  if (isset($_GET["search"]["is_ajax"]) && ($q = trim($_GET["search"]["is_ajax"]))) {
+    $query["is_ajax"] = (bool)(int) $q;
+  }
+
+  // Work out the limit
+  $limit = 25;
+  if (isset($_GET["limit"]) && is_numeric($_GET["limit"])) {
+    $limit = (int) $_GET["limit"];
+  }
+
+  // Get the sessions
+  $sessions = \XHProfUI\Profiler\Session::getSessions($db, $query, $limit);
+
+  // Render the template
+  return $app->template("sessions", array(
+    "sessions" => $sessions
+  ));
 });
 
 // Fire away!

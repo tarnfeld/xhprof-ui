@@ -58,7 +58,8 @@ xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
 function _xhprof_ui_shutdown() {
   global $_xhprof_ui_config;
 
-  \XHProfUI\Profiler\Session::save($_xhprof_ui_config);
+  $db = new \XHProfUI\Db\MySQL(); $db->connect();
+  \XHProfUI\Profiler\Session::save($db);
 }
 
 register_shutdown_function('_xhprof_ui_shutdown');
