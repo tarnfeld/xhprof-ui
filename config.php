@@ -12,9 +12,9 @@ return array(
     "database" => "xhprof_example" // MySQL DB Name
   ),
   "app" => array(
-    "namespace" => "Sample", // Application name
+    "namespace" => "Sample Profiler", // Application name
     "url" => "http://xhprof.dev", // XHProfUI URL
-    "server_id" => "air-development" // ID for this server
+    "server_id" => "development" // ID for this server
   ),
   "profiler" => array(
     "enabled" => true, // Enable the profiler?

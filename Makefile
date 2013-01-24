@@ -7,6 +7,8 @@
 #		- npm
 #
 
+all: composer bootstrap
+
 #
 # COMPOSER Update composer requirements
 #
@@ -22,4 +24,5 @@ bootstrap:
 		npm install; \
 		make build;
 	@echo "Copying assets"; \
-		cp -r vendor/twitter/bootstrap/docs/assets ./assets
+		rm -rf assets/bootstrap/*; \
+		cp -r vendor/twitter/bootstrap/docs/assets assets/bootstrap

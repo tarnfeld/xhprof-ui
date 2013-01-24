@@ -34,7 +34,22 @@ if (PHP_SAPI == "cli" || (isset($_xhprof_ui_config["profiler"]["allowed_ips"])) 
     // Set the cookie
     if ($_GET[$profile_key] == "1") {
       setcookie("xhprof_ui_profile_enabled", "1");
-      $do_profile = true;
+
+      // Redirect keeping any existing query strings intact
+      $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['PHP_SELF'];
+      if ($url && ($url = parse_url($url))) {
+
+        parse_str($url["query"], $query);
+        unset($query[$profile_key]);
+
+        $query_string = "";
+        if (count($query) > 0) {
+          $query_string = "?" . http_build_query($query);
+        }
+
+        header("Location: " . $url["path"] . $query_string);
+        exit;
+      }
     }
     else {
       setcookie("xhprof_ui_profile_enabled", "0");

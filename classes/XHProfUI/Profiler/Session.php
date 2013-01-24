@@ -55,7 +55,7 @@ class Session
     // Set the various custom properties
     $session->id = $session->_getSessionId();
     $session->url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['PHP_SELF'];
-    $session->timestamp = $_SERVER['REQUEST_TIME'];
+    $session->timestamp = date("Y-m-d H:m:s");
     $session->serverName = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
     $session->remoteAddress = $_SERVER['REMOTE_ADDR'];
     $session->isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
@@ -63,7 +63,7 @@ class Session
     $session->wallTime = isset($data['main()']['wt']) ? $data['main()']['wt'] : '';
     $session->cpu = isset($data['main()']['cpu']) ? $data['main()']['cpu'] : '';
 
-    $user = posix_getpwuid(posix_getuid());
+    $user = posix_getpwuid(posix_geteuid());
     $session->user = $user["name"];
 
     $session->serverId = $config["app"]["server_id"];
@@ -97,13 +97,14 @@ class Session
       if (!$where) $where = "WHERE";
       else $where .= " AND";
 
-      $where .= " `" . $field . "` = '" . $db->escape($value).  "'";
+      $where .= " `" . $field . "` LIKE '" . $db->escape($value).  "%'";
     }
 
     // Build the query
     $query = "SELECT *
               FROM `" . static::$table . "`
               {$where}
+              ORDER BY `timestamp` DESC
               LIMIT {$limit}";
 
     $r = $db->query($query);
@@ -114,6 +115,29 @@ class Session
       $session->_setFromArray($row);
 
       $results[$session->id] = $session;
+    }
+
+    return $results;
+  }
+
+  /**
+   * Get all options for a specific field
+   *
+   * @author Tom Arnfeld <tom@duedil.com>
+   * @param string $field
+   * @return array
+   */
+  public static function getOptions(\XHProfUI\Db $db, $field)
+  {
+    $query = "SELECT `" . $field . "`
+              FROM `" . static::$table . "`
+              GROUP BY `" . $field . "`";
+
+    $r = $db->query($query);
+    $results = array();
+
+    while ($row = $db->getNextAssoc($r)) {
+      $results[] = $row[$field];
     }
 
     return $results;
@@ -148,7 +172,7 @@ class Session
     $serializer = $config["profiler"]["serializer"];
 
     $query = "INSERT INTO `" . static::$table . "`
-              (`id`, `url`, `timestamp`, `server_name`, `server_id`, `remote_address`, `is_ajax`, `peak_memory`, `wall_time`, `cpu`, `profile_data`, `cookie_data`, `get_data`, `post_data`)
+              (`id`, `url`, `timestamp`, `server_name`, `server_id`, `remote_address`, `is_ajax`, `peak_memory`, `wall_time`, `cpu`, `profile_data`, `cookie_data`, `get_data`, `post_data`, `user`)
               VALUES(
                 '" . $this->_db->escape($this->id) . "',
                 '" . $this->_db->escape($this->url) . "',
@@ -163,7 +187,8 @@ class Session
                 '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->profileData, $serializer)) . "',
                 '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->cookieData, $serializer)) . "',
                 '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->getData, $serializer)) . "',
-                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->postData, $serializer)) . "'
+                '" . $this->_db->escape(\XHProfUI\Serializer::serialize($this->postData, $serializer)) . "',
+                '" . $this->_db->escape($this->user) . "'
               );";
 
     $this->_db->query($query);
@@ -181,7 +206,7 @@ class Session
     $fields = array(
       "id" => array("id", "string"),
       "url" => array("url", "string"),
-      "timestamp" => array("timestamp", "int"),
+      "timestamp" => array("timestamp", "string"),
       "server_name" => array("serverName", "string"),
       "server_id" => array("serverId", "string"),
       "remote_address" => array("remoteAddress", "string"),

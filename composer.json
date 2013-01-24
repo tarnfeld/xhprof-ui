@@ -7,9 +7,15 @@
         "email": "tarnfeld@me.com"
     }
   ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:twitter/bootstrap.git"
+    }
+  ],
   "require": {
     "vlucas/bulletphp": "dev-master",
-    "twitter/bootstrap": "dev-3.0.0-wip"
+    "twitter/bootstrap": "*"
   },
   "autoload": {
     "psr-0": {

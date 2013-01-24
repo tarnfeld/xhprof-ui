@@ -23,10 +23,10 @@ $app = new \Bullet\App(array(
 $config = XHProfUI\Config::load(__DIR__ . "/config.php");
 $db = new XHProfUI\Db\MySQL(); $db->connect();
 
-// Session list
-$app->path("/", function($request) use ($app, $db) {
+// Events
+$app->on("before", function($request, $response) {
 
-  // Check for any search params
+  // Parse the search query
   $query = array();
 
   if (isset($_GET["search"]["id"]) && ($q = trim($_GET["search"]["id"]))) {
@@ -45,6 +45,29 @@ $app->path("/", function($request) use ($app, $db) {
     $query["is_ajax"] = (bool)(int) $q;
   }
 
+  if (isset($_GET["search"]["user"]) && ($q = trim($_GET["search"]["user"]))) {
+    $query["user"] = $q;
+  }
+
+  $request->set("query", $query);
+});
+
+// Nav Filters
+$app->path("_nav_filters", function($request) use ($app, $db) {
+
+  return $app->template("_nav_filters", array(
+    "query" => $request->param("query", array()),
+    "users" => \XHProfUI\Profiler\Session::getOptions($db, "user"),
+    "server_name" => \XHProfUI\Profiler\Session::getOptions($db, "server_name"),
+    "server_id" => \XHProfUI\Profiler\Session::getOptions($db, "server_id")
+  ));
+});
+
+// Session list
+$app->path("/", function($request) use ($app, $db) {
+
+  $query = $request->param("query", array());
+
   // Work out the limit
   $limit = 25;
   if (isset($_GET["limit"]) && is_numeric($_GET["limit"])) {
@@ -56,7 +79,9 @@ $app->path("/", function($request) use ($app, $db) {
 
   // Render the template
   return $app->template("sessions", array(
-    "sessions" => $sessions
+    "active_nav" => "sessions",
+    "sessions" => $sessions,
+    "search" => $query
   ));
 });
 

@@ -1,5 +1,5 @@
 {
-    "hash": "c06dfd2eb18729a2521a4365c458059f",
+    "hash": "6bea65c9c9b96e54b68a78cdeb1139a2",
     "packages": [
         {
             "name": "pimple/pimple",
@@ -49,19 +49,20 @@
         },
         {
             "name": "twitter/bootstrap",
-            "version": "dev-3.0.0-wip",
+            "version": "v2.2.2",
+            "target-dir": "twitter/bootstrap",
             "source": {
                 "type": "git",
-                "url": "git://github.com/twitter/bootstrap.git",
-                "reference": "d30f47efb2580b0f435128940b48d5e5d30ca529"
+                "url": "git@github.com:twitter/bootstrap.git",
+                "reference": "v2.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/twitter/bootstrap/archive/d30f47efb2580b0f435128940b48d5e5d30ca529.zip",
-                "reference": "d30f47efb2580b0f435128940b48d5e5d30ca529",
+                "url": "https://github.com/twitter/bootstrap/zipball/v2.2.2",
+                "reference": "v2.2.2",
                 "shasum": ""
             },
-            "time": "1358650421",
+            "time": "2012-12-08 20:57:21",
             "type": "library",
             "installation-source": "source",
             "license": [
@@ -70,9 +71,13 @@
             "description": "Sleek, intuitive, and powerful front-end framework for faster and easier web development.",
             "homepage": "http://twitter.github.com/bootstrap/",
             "keywords": [
-                "css",
-                "bootstrap"
-            ]
+                "bootstrap",
+                "css"
+            ],
+            "support": {
+                "source": "https://github.com/twitter/bootstrap/tree/v2.2.2",
+                "issues": "https://github.com/twitter/bootstrap/issues"
+            }
         },
         {
             "name": "vlucas/bulletphp",
@@ -128,7 +133,6 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "vlucas/bulletphp": 20,
-        "twitter/bootstrap": 20
+        "vlucas/bulletphp": 20
     }
 }
